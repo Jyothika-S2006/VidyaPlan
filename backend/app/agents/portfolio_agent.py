@@ -34,7 +34,11 @@ def parse_instruction(instruction: str, default_budget: float) -> tuple[ToolCall
     if prompt_tpl:
         # Use simple replace instead of .format() — the template contains JSON
         # literal braces that would cause KeyError with str.format().
-        prompt = prompt_tpl.replace("{instruction}", instruction)
+        prompt = (
+            prompt_tpl
+            .replace("{default_budget}", str(int(default_budget)))
+            .replace("{instruction}", instruction)
+        )
         raw, source = call_granite(prompt, max_tokens=128, temperature=0.0)
         if raw and source == "granite":
             tool = parse_tool_call(raw)

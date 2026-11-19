@@ -1,8 +1,10 @@
-"""IBM watsonx.ai Granite client with retry, cache and template fallback.
+"""IBM watsonx.ai Granite client with retry, cache, circuit-breaker and template fallback.
 
 Uses the modern /ml/v1/text/chat API (ibm-watsonx-ai >= 1.0).
 Falls back to deterministic templates on any failure.
 Caches by MD5 of prompt to avoid repeat API calls.
+Circuit breaker: once a 429 rate-limit is hit, all subsequent calls in the
+same process skip Granite immediately without retrying.
 """
 import hashlib
 import logging
@@ -11,11 +13,7 @@ import time
 logger = logging.getLogger(__name__)
 
 _cache: dict = {}
-
-
-class LlmUnavailable(Exception):
-    """Raised when Granite is unreachable and no fallback is possible."""
-    pass
+_rate_limited: bool = False   # circuit breaker — set True on first 429
 
 
 def _get_cache_key(prompt: str) -> str:
@@ -34,10 +32,16 @@ def call_granite(
     Returns:
         Tuple of (response_text, source) where source is 'granite' or 'template'.
     """
+    global _rate_limited
+
     from app.settings import get_settings
     settings = get_settings()
 
     if not settings.watsonx_api_key or not settings.watsonx_project_id:
+        return "", "template"
+
+    # Circuit breaker — skip Granite entirely if we already hit a rate limit
+    if _rate_limited:
         return "", "template"
 
     cache_key = _get_cache_key(prompt)
@@ -71,8 +75,20 @@ def call_granite(
             return result, "granite"
 
         except Exception as exc:
+            exc_str = str(exc)
+            # 429 rate limit — trip the circuit breaker, don't retry
+            if "429" in exc_str or "consumption_limit_reached" in exc_str:
+                logger.warning("Granite rate-limited (429); switching to template fallback for all remaining calls.")
+                _rate_limited = True
+                return "", "template"
             logger.warning("Granite call attempt %d/%d failed: %s", attempt + 1, retries + 1, exc)
             if attempt < retries:
                 time.sleep(1)
 
     return "", "template"
+
+
+def reset_circuit_breaker() -> None:
+    """Reset the 429 circuit breaker (call this between pipeline runs if desired)."""
+    global _rate_limited
+    _rate_limited = False

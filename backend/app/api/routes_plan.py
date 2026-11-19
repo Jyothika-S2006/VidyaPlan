@@ -95,19 +95,59 @@ async def run_plan(req: PlanRequest, session: AsyncSession = Depends(get_session
     session.add(plan)
     await session.flush()
 
+    selected_recs: list[Recommendation] = []
     for item in result_data["selected"]:
-        session.add(Recommendation(plan_run_id=plan.id, school_id=item["school_id"], facility_type=item["facility"], cost=item["cost"], priority=item["priority"], status="selected"))
+        rec = Recommendation(plan_run_id=plan.id, school_id=item["school_id"], facility_type=item["facility"], cost=item["cost"], priority=item["priority"], status="selected")
+        session.add(rec)
+        selected_recs.append(rec)
     for item in result_data["deferred"]:
         session.add(Recommendation(plan_run_id=plan.id, school_id=item["school_id"], facility_type=item["facility"], cost=item["cost"], priority=item["priority"], status="deferred", reason_code=item.get("reason_code", "OUT_OF_BUDGET")))
     for item in blocked:
         session.add(Recommendation(plan_run_id=plan.id, school_id=item["school_id"], facility_type=item["facility"], cost=item["cost"], priority=item["priority"], status="deferred", reason_code="BLOCKED_PREREQ_UNVERIFIED"))
+    await session.flush()  # assigns IDs to selected_recs before commit
     await session.commit()
+
+    # Enrich selected items with their DB recommendation IDs for the review workflow
+    selected_with_ids = [
+        {**item, "id": rec.id}
+        for item, rec in zip(result_data["selected"], selected_recs)
+    ]
+
+    # Build school list for orchestrator (evidence + eligibility bundled)
+    schools_for_pipeline = [
+        {
+            "id": sid,
+            "name": school_map[sid].name,
+            "district": school_map[sid].district,
+            "evidence": school_evidence[sid],
+            "eligibility": {f: school_evidence[sid].get(f, "MISSING") for f in ["electricity", "library", "computers"]},
+        }
+        for sid in school_map
+    ]
+    import asyncio
+    from app.agents.orchestrator import run_pipeline
+
+    # Run the agent pipeline in a thread so it doesn't block the HTTP response.
+    # The trace is collected synchronously there but we fire-and-forget here;
+    # the client fetches /api/plan/{id}/trace once the plan page loads.
+    loop = asyncio.get_event_loop()
+    loop.run_in_executor(
+        None,
+        lambda: run_pipeline(
+            plan_id=plan.id,
+            schools=schools_for_pipeline,
+            selected=selected_with_ids,
+            deferred=result_data["deferred"],
+            budget=req.budget,
+            budget_used=result_data["budget_used"],
+        ),
+    )
 
     schools_improved = len({i["school_id"] for i in result_data["selected"]})
     return {
         "plan_id": plan.id, "budget": req.budget, "budget_used": result_data["budget_used"],
         "budget_remaining": req.budget - result_data["budget_used"], "objective": result_data["objective"],
-        "selected": result_data["selected"], "deferred": result_data["deferred"],
+        "selected": selected_with_ids, "deferred": result_data["deferred"],
         "blocked": [{"school_name": b["school_name"], "facility": b["facility"], "reason_code": "BLOCKED_PREREQ_UNVERIFIED"} for b in blocked],
         "kpis": {"interventions_funded": len(result_data["selected"]), "schools_improved": schools_improved, "deferred_count": len(result_data["deferred"])},
     }
@@ -272,6 +312,26 @@ async def get_baselines(plan_id: int, session: AsyncSession = Depends(get_sessio
     opt = solve(eligible, plan.budget)
     results = run_baselines(eligible, plan.budget, opt, n_random=100, seed=42)
     return [{"method": r.method, "objective": r.objective, "interventions_funded": r.interventions_funded, "schools_improved": r.schools_improved, "budget_used": r.budget_used, "pct_vs_optimiser": r.pct_vs_optimiser, "provenance": "SIMULATED"} for r in results]
+
+
+@router.get("/plan/{plan_id}/trace")
+async def get_plan_trace(plan_id: int, session: AsyncSession = Depends(get_session)):
+    """Return agent pipeline trace steps for a plan (may be empty if still running)."""
+    from app.db.models import AgentTrace
+    result = await session.execute(
+        select(AgentTrace).where(AgentTrace.plan_run_id == plan_id).order_by(AgentTrace.id)
+    )
+    steps = result.scalars().all()
+    return [
+        {
+            "agent": s.agent,
+            "tool_called": s.tool_called,
+            "latency_ms": s.latency_ms,
+            "source": s.source,
+            "output_summary": s.output_summary,
+        }
+        for s in steps
+    ]
 
 
 @router.get("/plan/{plan_id}/explanations")

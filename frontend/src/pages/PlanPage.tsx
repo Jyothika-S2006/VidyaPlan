@@ -89,6 +89,8 @@ export default function PlanPage() {
   const [copilotResult,     setCopilotResult]     = useState<any>(null)
   const [copilotLoading,    setCopilotLoading]    = useState(false)
   const [traceOpen,         setTraceOpen]         = useState(false)
+  const [traceSteps,        setTraceSteps]        = useState<any[]>([])
+  const [traceLoading,      setTraceLoading]      = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -170,7 +172,7 @@ export default function PlanPage() {
 
   return (
     <div className="page fade-in">
-      <AgentTrace steps={[]} open={traceOpen} onClose={() => setTraceOpen(false)} />
+      <AgentTrace steps={traceSteps} open={traceOpen} onClose={() => setTraceOpen(false)} loading={traceLoading} />
 
       {/* Page header */}
       <div className="page-header">
@@ -182,7 +184,17 @@ export default function PlanPage() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
-          <button className="btn btn-secondary" onClick={() => setTraceOpen(true)}   style={{ fontSize: 'var(--font-sm)' }}>Agent Trace</button>
+          <button className="btn btn-secondary" onClick={() => {
+            setTraceOpen(true)
+            if (plan?.plan_id && traceSteps.length === 0) {
+              setTraceLoading(true)
+              const poll = () => api.getPlanTrace(plan.plan_id).then(steps => {
+                if (steps.length > 0) { setTraceSteps(steps); setTraceLoading(false) }
+                else setTimeout(poll, 3000)
+              }).catch(() => setTraceLoading(false))
+              poll()
+            }
+          }} style={{ fontSize: 'var(--font-sm)' }}>Agent Trace</button>
           <button className="btn btn-secondary" onClick={handleExportMemo}           style={{ fontSize: 'var(--font-sm)' }}>Export Memo PDF</button>
           <button className="btn btn-primary"   onClick={() => navigate('/review')}  style={{ fontSize: 'var(--font-sm)' }}>Review →</button>
         </div>

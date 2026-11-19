@@ -38,6 +38,7 @@ export const api = {
     request<ScenarioCompare>('/api/plan/compare', { method: 'POST', body: JSON.stringify(body) }),
   getBaselines: (planId: number) => request<BaselineRow[]>(`/api/plan/${planId}/baselines`),
   getExplanations: (planId: number) => request<any>(`/api/plan/${planId}/explanations`),
+  getPlanTrace: (planId: number) => request<any[]>(`/api/plan/${planId}/trace`),
 
   submitReview: (recId: number, body: { decision: string; note?: string; reviewer: string }) =>
     request<any>(`/api/reviews/${recId}`, { method: 'POST', body: JSON.stringify(body) }),

@@ -10,9 +10,10 @@ interface Props {
   steps: TraceStep[]
   open: boolean
   onClose: () => void
+  loading?: boolean
 }
 
-export default function AgentTrace({ steps, open, onClose }: Props) {
+export default function AgentTrace({ steps, open, onClose, loading }: Props) {
   if (!open) return null
 
   return (
@@ -25,7 +26,9 @@ export default function AgentTrace({ steps, open, onClose }: Props) {
         </div>
 
         <div style={{ padding: 'var(--space-5)', flex: 1 }}>
-          {steps.length === 0 ? (
+          {loading ? (
+            <p style={{ color: 'var(--text-muted)', fontSize: 'var(--font-sm)' }}>⏳ Agent pipeline is running… check back in a moment.</p>
+          ) : steps.length === 0 ? (
             <p style={{ color: 'var(--text-muted)', fontSize: 'var(--font-sm)' }}>No agent steps recorded yet. Run a plan to see the agent pipeline.</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>

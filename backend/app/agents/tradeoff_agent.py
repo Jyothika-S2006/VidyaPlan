@@ -124,14 +124,21 @@ def generate_batch_rationales(
     """
     Generate rationales for all selected and deferred items.
 
+    Granite is called only for SELECTED items (capped at 10).
+    Deferred items always use the deterministic template — they are
+    rarely shown in the UI and don't need LLM explanation at plan time.
+
     Returns:
         List of dicts with item data + explanation + explanation_source.
     """
     results = []
-    for item in selected:
+    for item in selected[:5]:  # cap: at most 5 Granite calls for funded items
         text, source = generate_item_rationale(item, budget_used, total_budget)
         results.append({**item, "explanation": text, "explanation_source": source})
-    for item in deferred:
-        text, source = generate_item_rationale(item, budget_used, total_budget)
-        results.append({**item, "explanation": text, "explanation_source": source})
+    for item in selected[5:]:  # remaining selected: template only
+        text = _template_item_rationale(item, budget_used, total_budget)
+        results.append({**item, "explanation": text, "explanation_source": "template"})
+    for item in deferred:  # all deferred: template only
+        text = _template_item_rationale(item, budget_used, total_budget)
+        results.append({**item, "explanation": text, "explanation_source": "template"})
     return results

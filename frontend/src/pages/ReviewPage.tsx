@@ -79,7 +79,7 @@ export default function ReviewPage() {
   }
 
   const selected = plan?.selected ?? []
-  const allDecided = selected.length > 0 && selected.every((_: any, i: number) => decisions[i] != null)
+  const allDecided = selected.length > 0 && selected.every((rec: any) => decisions[rec.id] != null)
 
   return (
     <div className="page fade-in">
@@ -176,10 +176,10 @@ export default function ReviewPage() {
               <p style={{ color: 'var(--text-muted)', textAlign: 'center' }}>No funded interventions to review.</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-                {selected.map((rec: any, i: number) => {
-                  const decision = decisions[i]
+                {selected.map((rec: any) => {
+                  const decision = decisions[rec.id]
                   return (
-                    <div key={i} style={{
+                    <div key={rec.id} style={{
                       padding: 'var(--space-4)',
                       background: decision === 'approved'
                         ? 'var(--bg-success)'
@@ -232,22 +232,22 @@ export default function ReviewPage() {
                           <input
                             className="form-input"
                             placeholder="Note (optional)…"
-                            value={notes[i] ?? ''}
-                            onChange={e => setNotes(n => ({ ...n, [i]: e.target.value }))}
+                            value={notes[rec.id] ?? ''}
+                            onChange={e => setNotes(n => ({ ...n, [rec.id]: e.target.value }))}
                             style={{ marginBottom: 'var(--space-3)' }}
                           />
                           <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
                             <button
                               className="btn btn-success"
-                              onClick={() => handleReview(i, 'approved')}
-                              disabled={submitting === i}
+                              onClick={() => handleReview(rec.id, 'approved')}
+                              disabled={submitting === rec.id}
                             >
                               ✓ Approve
                             </button>
                             <button
                               className="btn btn-danger"
-                              onClick={() => handleReview(i, 'rejected')}
-                              disabled={submitting === i}
+                              onClick={() => handleReview(rec.id, 'rejected')}
+                              disabled={submitting === rec.id}
                             >
                               ✗ Reject
                             </button>

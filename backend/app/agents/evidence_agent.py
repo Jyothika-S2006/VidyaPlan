@@ -11,6 +11,10 @@ Rules (non-negotiable):
 - If Granite fails or grounding fails, return a template note.
 - Cache by input hash to avoid repeat calls.
 - Mark each output with source = "granite" | "template".
+
+Performance note: Granite is only attempted for the first GRANITE_SCHOOL_CAP
+schools per pipeline run. All others use deterministic templates immediately.
+This avoids rate-limiting and keeps the pipeline fast for demos.
 """
 import hashlib
 import logging
@@ -22,8 +26,10 @@ from app.agents.granite_client import call_granite
 logger = logging.getLogger(__name__)
 
 PROMPTS_DIR = Path(__file__).parent / "prompts"
+GRANITE_SCHOOL_CAP = 0   # pipeline always uses templates (grounding fails on numeric IDs)
 
 _cache: dict[str, tuple[str, str]] = {}  # hash -> (text, source)
+_granite_calls_this_run: int = 0  # reset by orchestrator between runs
 
 
 def _hash(text: str) -> str:
@@ -70,6 +76,12 @@ def _template_district_summary(district: str, stats: dict) -> str:
     )
 
 
+def reset_granite_counter() -> None:
+    """Reset per-run Granite call counter. Called by the orchestrator."""
+    global _granite_calls_this_run
+    _granite_calls_this_run = 0
+
+
 def generate_school_note(
     school_name: str,
     district: str | None,
@@ -82,7 +94,12 @@ def generate_school_note(
     Returns:
         (note_text, source) where source is "granite" or "template".
     """
+    global _granite_calls_this_run
     template = _template_school_note(school_name, evidence, eligibility)
+
+    # Fast path: skip Granite if cap reached (keeps pipeline fast)
+    if _granite_calls_this_run >= GRANITE_SCHOOL_CAP:
+        return template, "template"
 
     # Build facts for grounding
     facts = {
@@ -108,6 +125,7 @@ def generate_school_note(
     if cache_key in _cache:
         return _cache[cache_key]
 
+    _granite_calls_this_run += 1
     text, source = call_granite(prompt, max_tokens=128)
     if not text or source == "template":
         return template, "template"
