@@ -1,0 +1,27 @@
+# Evidence classification rules
+# Source: Karnataka Schools Facilities Data 2017-18
+# All codes confirmed by profiling 3df29c70-150e-4b26-956b-3a85d0b5f964.csv
+
+electricity:
+  # ELECTRIC_YN: 1=Present(OK), 2=Absent(GAP), 3=Partial/unclear, 9=No data
+  ok_values: ["1"]
+  gap_values: ["2"]
+  unreliable_values: ["3"]  # Partial/unclear — not a confirmed gap, not confirmed OK
+  missing_values: ["9", ""]  # 9 = no data recorded
+
+library:
+  # LIBRARY_YN: 1=Present(OK), 2=Absent(GAP), 9=No data
+  ok_values: ["1"]
+  gap_values: ["2"]
+  unreliable_values: []
+  missing_values: ["9", ""]  # 9 = no data recorded
+
+computers:
+  # COMPUTER: numeric count of computers
+  # 0 = no computers (GAP), positive integer = computers present (OK)
+  # This field is treated differently — see classifier (not ok_values/gap_values)
+  # Values >= 1 = CONFIRMED_OK, 0 = CONFIRMED_GAP
+  # Note: a small number of rows have value "9" which likely means "not applicable"
+  # for schools with no building (BLDSTATUS=9); these are UNRELIABLE
+  missing_values: [""]
+  not_applicable_values: []  # handled in classifier via building status check

@@ -1,0 +1,95 @@
+/* VidyaPlan Pastel Design System — Theme Variables */
+
+:root {
+  /* ── Base Backgrounds ───────────────────────── */
+  --bg-base:          #F5EBE7;
+  --bg-soft:          #FAF5F2;
+  --bg-surface:       #FFF9F6;
+  --bg-surface-2:     #F8F1ED;
+
+  /* ── Primary: Lavender ───────────────────────── */
+  --color-primary:        #C6B4DC;
+  --color-primary-light:  #D9C9EC;
+  --color-primary-dark:   #90759C;
+  --color-primary-hover:  #B5A5D2;
+
+  /* ── Accent Colors ───────────────────────────── */
+  --color-dusty-pink:   #DEAEA1;
+  --color-pink-light:   #F6DDD6;
+  --color-peach:        #F4D9B3;
+  --color-peach-light:  #FBEBD7;
+  --color-sage:         #A5D2A6;
+  --color-sage-dark:    #93A66D;
+  --color-yellow:       #F9CB74;
+  --color-yellow-light: #FFF0D1;
+  --color-mauve:        #B8A2C8;
+
+  /* ── Typography ──────────────────────────────── */
+  --text-primary:   #2C1F1C;   /* raised from #362C2A — 7:1 on surface */
+  --text-secondary: #5A4A47;   /* raised from #766A68 — 5.5:1 on surface */
+  --text-muted:     #7A6A66;   /* raised from #9B8D89 — 4.6:1 on surface */
+
+  /* ── Borders ─────────────────────────────────── */
+  --border-main:   #D8C8C2;    /* darkened from #E9DDD8 — visible on cream bg */
+  --border-light:  #E8D8D2;    /* darkened from #F1E8E4 */
+
+  /* ── Status Colors ───────────────────────────── */
+  --status-success: #7EAF86;
+  --status-warning: #E5B66B;
+  --status-danger:  #D99191;
+  --status-info:    #A9B8DE;
+
+  /* ── Border Radius ───────────────────────────── */
+  --radius-sm:  10px;
+  --radius-md:  16px;
+  --radius-lg:  22px;
+  --radius-xl:  28px;
+
+  /* ── Shadows ─────────────────────────────────── */
+  --shadow-xs: 0 1px 3px rgba(54,44,42,0.06);
+  --shadow-sm: 0 2px 8px rgba(54,44,42,0.08);
+  --shadow-md: 0 4px 16px rgba(54,44,42,0.10);
+  --shadow-lg: 0 8px 32px rgba(54,44,42,0.12);
+
+  /* ── Spacing ─────────────────────────────────── */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* ── Typography Scale ────────────────────────── */
+  --font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+  --font-xs:   11px;
+  --font-sm:   12px;
+  --font-base: 14px;
+  --font-md:   15px;
+  --font-lg:   17px;
+  --font-xl:   20px;
+  --font-2xl:  24px;
+  --font-3xl:  30px;
+
+  /* ── Sidebar ─────────────────────────────────── */
+  --sidebar-width: 228px;
+  --sidebar-bg:    #C6B4DC;
+  --sidebar-text:  #362C2A;
+
+  /* ── Transitions ─────────────────────────────── */
+  --transition-fast: 0.12s ease;
+  --transition-base: 0.2s ease;
+
+  /* ── Status backgrounds ──────────────────────── */
+  --bg-success: #eef7f0;
+  --bg-danger:  #fdf0f0;
+  --bg-warning: #fdf8ec;
+  --bg-info:    #eef2fb;
+
+  /* ── Sidebar active accent ───────────────────── */
+  --sidebar-active-bg:   rgba(255,255,255,0.52);
+  --sidebar-active-text: #5a3a7a;
+  --sidebar-hover-bg:    rgba(255,255,255,0.28);
+}

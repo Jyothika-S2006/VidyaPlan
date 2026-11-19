@@ -1,0 +1,33 @@
+# Render deployment configuration
+# Backend: Python FastAPI service
+# Deploy at: https://dashboard.render.com → New → Blueprint
+
+services:
+  - type: web
+    name: vidyaplan-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: WATSONX_API_KEY
+        sync: false          # set manually in Render dashboard
+      - key: WATSONX_URL
+        value: https://us-south.ml.cloud.ibm.com
+      - key: WATSONX_PROJECT_ID
+        sync: false
+      - key: WATSONX_MODEL_ID
+        value: ibm/granite-4-h-small
+      - key: DATABASE_URL
+        value: sqlite+aiosqlite:///./vidyaplan.db
+      - key: LLM_TIMEOUT_SECONDS
+        value: "20"
+      - key: STRESS_SCENARIOS
+        value: "300"
+      - key: CORS_ORIGINS
+        sync: false          # set to your Vercel frontend URL after deploy
+    disk:
+      name: vidyaplan-data
+      mountPath: /opt/render/project/src
+      sizeGB: 1

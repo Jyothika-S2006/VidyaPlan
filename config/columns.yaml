@@ -1,0 +1,18 @@
+# Column mapping: raw CSV column -> canonical field
+# Source: Karnataka Schools Facilities Data 2017-18
+# Confirmed against 3df29c70-150e-4b26-956b-3a85d0b5f964.csv
+
+# School identity
+school_id: "SCHCD"           # 11-digit school code (encodes state+district+block+school)
+school_name: null             # No name column in dataset; name derived as "School {SCHCD}"
+district: null                # No text district; district code = SCHCD[2:4]
+block: null                   # No text block; block code = SCHCD[4:6]
+enrollment: null              # No enrollment column in this dataset; default need_multiplier=1.0
+
+# Observation year
+observation_year: "AC_YEAR"  # Value is "2017-18" for all rows
+
+# Facility columns
+electricity: "ELECTRIC_YN"   # 1=Present, 2=Absent, 3=Partial, 9=No data
+library: "LIBRARY_YN"        # 1=Present, 2=Absent, 9=No data
+computers: "COMPUTER"        # Numeric count: 0=none, >0=present, 9=not applicable (some schools)

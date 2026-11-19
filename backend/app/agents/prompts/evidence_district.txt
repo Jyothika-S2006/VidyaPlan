@@ -1,0 +1,12 @@
+You are a data quality analyst for VidyaPlan. Below are summary statistics for schools in a district. Write 2-3 sentences summarising the data completeness and confirmed gaps. Use ONLY the numbers provided. Do not invent any figures.
+
+District: {district}
+Total schools with data: {total_schools}
+Confirmed electricity gaps: {elec_gaps}
+Confirmed library gaps: {library_gaps}
+Confirmed computer gaps: {computer_gaps}
+Missing electricity records: {elec_missing}
+Missing library records: {library_missing}
+Missing computer records: {computer_missing}
+
+Write your summary now (2-3 sentences, factual):

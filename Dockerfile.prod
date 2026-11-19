@@ -1,0 +1,46 @@
+# ── Stage 1: Build the React frontend ────────────────────────────────────────
+FROM node:20-slim AS frontend-build
+WORKDIR /frontend
+COPY frontend/package*.json ./
+RUN npm ci
+COPY frontend/ ./
+RUN npm run build
+
+# ── Stage 2: Python runtime serving frontend + API ───────────────────────────
+FROM python:3.11-slim AS runtime
+
+# Install curl for healthcheck
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+
+# Non-root user for security
+RUN useradd -m -u 1000 vidyaplan
+WORKDIR /app
+
+# Install Python dependencies
+COPY backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt aiofiles
+
+# Copy backend
+COPY backend/ ./backend/
+COPY config/ ./config/
+COPY data/raw/ ./data/raw/
+
+# Copy built frontend into FastAPI static files directory
+COPY --from=frontend-build /frontend/dist ./frontend/dist
+
+# Adjust main.py to serve the React build (StaticFiles mount)
+# The startup script seeds the DB and loads data before serving
+COPY scripts/startup.sh ./startup.sh
+RUN chmod +x startup.sh
+
+ENV PYTHONPATH=/app
+ENV PORT=8000
+
+USER vidyaplan
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+  CMD curl -f http://localhost:8000/health || exit 1
+
+CMD ["./startup.sh"]
