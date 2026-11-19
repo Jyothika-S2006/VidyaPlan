@@ -2,7 +2,7 @@
 FROM node:20-slim AS frontend-build
 WORKDIR /frontend
 COPY frontend/package*.json ./
-RUN npm ci
+RUN npm install
 COPY frontend/ ./
 RUN npm run build
 
@@ -23,7 +23,7 @@ RUN pip install --no-cache-dir -r requirements.txt aiofiles
 # Copy backend
 COPY backend/ ./backend/
 COPY config/ ./config/
-COPY data/raw/ ./data/raw/
+RUN mkdir -p ./data/raw/
 
 # Copy built frontend into FastAPI static files directory
 COPY --from=frontend-build /frontend/dist ./frontend/dist
